@@ -1,9 +1,12 @@
 """Runtime settings, read from environment variables once at startup."""
 import os
 import secrets
-from dotenv import load_dotenv
 
-load_dotenv()
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    pass
 
 
 class Settings:
