@@ -9,11 +9,13 @@ from collections import defaultdict, deque
 from typing import Optional
 
 _INJECTION = re.compile(
-    r"(?:ignore|disregard|forget|override|bypass)\W+(?:all\W+|any\W+|the\W+|your\W+|previous\W+|prior\W+|above\W+)*"
-    r"(?:instructions?|prompts?|rules?)"
+    r"(?:ignore|disregard|forget|override|bypass)\W+(?:all\W+|any\W+|the\W+|your\W+|previous\W+|prior\W+|above\W+|existing\W+)*"
+    r"(?:instructions?|prompts?|rules?|guardrails?|guidelines?)"
     r"|system\s*prompt|you\s+are\s+now|act\s+as\b|reveal\s+(?:your|the)\s+(?:prompt|instructions|key)"
     r"|developer\s+mode|jailbreak|api[_\s-]?key|prompt\s*injection"
-    r"|(?:dan|chatgpt|claude|gemini)\s*mode",
+    r"|(?:dan|chatgpt|claude|gemini)\s*(?:mode|\d+(?:\.\d+)?|\b)"
+    r"|aim\s+mode|simulate\s+dan|hypothetical\s+response|roleplay\s+as"
+    r"|do\s+anything\s+now|adversarial\s+prompt|new\s+system\s+instruction",
     re.IGNORECASE,
 )
 
@@ -78,5 +80,9 @@ SECURITY_HEADERS = {
     "X-Frame-Options": "DENY",
     "Referrer-Policy": "no-referrer",
     "Permissions-Policy": "camera=(), microphone=(), geolocation=()",
+    "Strict-Transport-Security": "max-age=31536000; includeSubDomains",
+    "X-Permitted-Cross-Domain-Policies": "none",
+    "Cross-Origin-Opener-Policy": "same-origin",
+    "Cross-Origin-Resource-Policy": "same-origin",
     "Cache-Control": "no-store",
 }

@@ -51,6 +51,22 @@
     } catch (_) {}
   }
 
+  // Restore persisted preferences
+  try {
+    const savedPlain = localStorage.getItem("learnloop_plain");
+    if (savedPlain === "true" && $("steps") && $("toggle-paper")) {
+      $("steps").classList.add("plain");
+      $("toggle-paper").setAttribute("aria-pressed", "true");
+      $("toggle-paper").textContent = "Lined paper";
+    }
+    const savedSound = localStorage.getItem("learnloop_sound");
+    if (savedSound === "false" && $("toggle-sound")) {
+      soundEnabled = false;
+      $("toggle-sound").setAttribute("aria-pressed", "false");
+      $("toggle-sound").textContent = "Sound: Muted";
+    }
+  } catch (_) {}
+
   const paperBtn = $("toggle-paper");
   if (paperBtn) {
     paperBtn.addEventListener("click", () => {
@@ -58,6 +74,7 @@
       const isPlain = steps.classList.toggle("plain");
       paperBtn.setAttribute("aria-pressed", String(isPlain));
       paperBtn.textContent = isPlain ? "Lined paper" : "Plain paper";
+      try { localStorage.setItem("learnloop_plain", String(isPlain)); } catch (_) {}
     });
   }
 
@@ -67,6 +84,37 @@
       soundEnabled = !soundEnabled;
       soundBtn.setAttribute("aria-pressed", String(soundEnabled));
       soundBtn.textContent = soundEnabled ? "Sound: On" : "Sound: Muted";
+      try { localStorage.setItem("learnloop_sound", String(soundEnabled)); } catch (_) {}
+    });
+  }
+
+  // Accessible Help Modal Dialog
+  const helpModal = $("help-modal");
+  const showHelp = (on) => {
+    if (!helpModal) return;
+    show(helpModal, on);
+    if (on) {
+      const ok = $("help-ok");
+      if (ok) ok.focus();
+    } else {
+      const btn = $("btn-help");
+      if (btn) btn.focus();
+    }
+  };
+  if ($("btn-help")) $("btn-help").addEventListener("click", () => showHelp(true));
+  if ($("help-close")) $("help-close").addEventListener("click", () => showHelp(false));
+  if ($("help-ok")) $("help-ok").addEventListener("click", () => showHelp(false));
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && helpModal && !helpModal.hidden) showHelp(false);
+  });
+
+  // Keyboard shortcut: Ctrl+Enter to check steps immediately
+  if ($("steps")) {
+    $("steps").addEventListener("keydown", (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
+        e.preventDefault();
+        $("check").click();
+      }
     });
   }
 
@@ -220,6 +268,7 @@
   });
 
   // ---- student: practice ------------------------------------------------------------------
+  let streak = 0;
   $("pr-next").addEventListener("click", async () => {
     text($("pr-error"), "");
     text($("pr-result"), "");
@@ -250,10 +299,18 @@
       });
       state.qid = null;
       show($("pr-check"), false);
+      const streakEl = $("pr-streak");
       if (r.correct) {
+        streak++;
         playTone("success");
+        if (streakEl) {
+          text(streakEl, `🔥 ${streak} in a row!`);
+          show(streakEl, true);
+        }
       } else {
+        streak = 0;
         playTone("attention");
+        if (streakEl) show(streakEl, false);
       }
       text($("pr-result"), r.correct ? "Right! The next one will adapt to you." : `Not quite. The answer was x = ${r.answer}.`);
       text($("pr-next"), "Next question");
@@ -307,10 +364,12 @@
   }
 
   // ---- teacher ---------------------------------------------------------------------------------
+  let lastTeacherSummary = null;
   async function loadTeacher() {
     text($("t-error"), "");
     try {
       const s = await api("/api/teacher/summary");
+      lastTeacherSummary = s;
       text($("t-students"), s.students);
       text($("t-checks"), s.checks);
       text($("t-flag"), s.needs_teacher);
@@ -334,4 +393,38 @@
     }
   }
   $("t-refresh").addEventListener("click", loadTeacher);
+
+  const downloadBtn = $("t-download-plan");
+  if (downloadBtn) {
+    downloadBtn.addEventListener("click", () => {
+      if (!lastTeacherSummary) return;
+      const dateStr = new Date().toISOString().split("T")[0];
+      const misLines = (lastTeacherSummary.misconceptions || [])
+        .map((m) => `- ${m.title} (${m.count} occurrences): ${m.tip}`)
+        .join("\n");
+      const content = [
+        `# LearnLoop Daily Class Briefing (${dateStr})`,
+        ``,
+        `Students participating: ${lastTeacherSummary.students}`,
+        `Total algebra checks: ${lastTeacherSummary.checks}`,
+        `Flagged for teacher review: ${lastTeacherSummary.needs_teacher}`,
+        ``,
+        `## Top Misconceptions Observed:`,
+        misLines || "- None recorded yet.",
+        ``,
+        `## Recommended Mini-Lesson Plan:`,
+        lastTeacherSummary.mini_lesson || "Review general step moves with 2 simple warm-up problems.",
+        ``,
+        `Generated automatically by LearnLoop for Class 8 Mathematics.`
+      ].join("\n");
+
+      const blob = new Blob([content], { type: "text/markdown;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `learnloop-class-briefing-${dateStr}.md`;
+      a.click();
+      URL.revokeObjectURL(url);
+    });
+  }
 })();

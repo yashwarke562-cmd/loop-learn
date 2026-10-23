@@ -28,5 +28,11 @@
  {"q":"2x + 3 = 11","steps":["7x = 100"],"step":1,"m":"unclear_error"},
  {"q":"3x + 5 = 20","steps":["x = 100"],"step":1,"m":"unclear_error"},
  {"q":"2x + 3 = x + 9","steps":["2x + x = 9 + 3","3x = 12"],"step":1,"m":"sign_error_both"},
- {"q":"4(x - 2) = 16","steps":["4x - 8 = 16","4x = 24","x = 6"],"ok":true}
+ {"q":"4(x - 2) = 16","steps":["4x - 8 = 16","4x = 24","x = 6"],"ok":true},
+ {"q":"(x + 1)/2 = 5","steps":["x + 1 = 10","x = 9"],"ok":true},
+ {"q":"5(x - 3) = 10","steps":["5x - 3 = 10","5x = 13"],"step":1,"m":"distribution_error"},
+ {"q":"7x + 4 = 2x + 19","steps":["7x - 2x = 19 - 4","5x = 15","x = 3"],"ok":true},
+ {"q":"4x + 8 = 20","steps":["4x = 12","x = 3"],"ok":true},
+ {"q":"2(x + 4) = 14","steps":["2x + 4 = 14","2x = 10"],"step":1,"m":"distribution_error"},
+ {"q":"6x - 5 = 2x + 15","steps":["6x - 2x = 15 + 5","4x = 20","x = 5"],"ok":true}
 ]

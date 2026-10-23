@@ -51,6 +51,7 @@
             <div class="row controls-row">
               <button id="toggle-paper" class="link small" type="button" aria-pressed="false" aria-label="Toggle lined paper styling">Plain paper</button>
               <button id="toggle-sound" class="link small" type="button" aria-pressed="true" aria-label="Toggle accessibility sound feedback">Sound: On</button>
+              <button id="btn-help" class="link small" type="button" aria-label="Open algebra guide and formatting tips">How it works</button>
             </div>
           </div>
           <label for="question">The equation you were given</label>
@@ -89,7 +90,10 @@
           <h2 id="pr-h">Practice that fits you</h2>
           <p id="pr-empty" class="empty">Questions are chosen from your weakest skill and get harder as you improve.</p>
           <div id="pr-box" hidden>
-            <p id="pr-meta" class="hint"></p>
+            <div class="row between">
+              <p id="pr-meta" class="hint"></p>
+              <span id="pr-streak" class="streak-badge" hidden>🔥 1 in a row!</span>
+            </div>
             <p id="pr-q" class="eq big" aria-live="polite"></p>
             <label for="pr-a">Your answer for x</label>
             <input id="pr-a" class="eq" maxlength="30" autocomplete="off" placeholder="4 or -3/2" aria-describedby="pr-a-hint">
@@ -115,7 +119,10 @@
       <section class="card" aria-labelledby="t-h">
         <div class="row between">
           <h2 id="t-h">Class overview</h2>
-          <button id="t-refresh" class="secondary" type="button" aria-label="Refresh class data">Refresh</button>
+          <div class="row controls-row">
+            <button id="t-download-plan" class="secondary" type="button" aria-label="Download printable lesson briefing">Download Lesson Plan</button>
+            <button id="t-refresh" class="secondary" type="button" aria-label="Refresh class data">Refresh</button>
+          </div>
         </div>
         <p class="hint">Aggregated only. Individual students are never shown here.</p>
         <dl class="stats">
@@ -141,6 +148,28 @@
         <h2 id="tl-h">Suggested mini-lesson</h2>
         <p id="t-lesson" class="message">Once students submit work, a suggestion shows up here.</p>
       </section>
+    </div>
+
+    <div id="help-modal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="help-title" hidden>
+      <div class="modal">
+        <button id="help-close" class="close-btn" type="button" aria-label="Close dialog">&times;</button>
+        <h3 id="help-title">How to use LearnLoop</h3>
+        <p>LearnLoop is your personal algebra companion for Class 8 linear equations. It finds the <strong>exact line</strong> where your working went wrong, without judging or taking points off.</p>
+        <h4>Formatting Equations</h4>
+        <ul>
+          <li><strong>One line per step:</strong> show each algebraic move clearly (e.g. <code>2x = 11 - 3</code> then <code>x = 4</code>).</li>
+          <li><strong>Moving terms:</strong> remember that adding turns into subtracting when crossing the equals sign (+3 becomes -3).</li>
+          <li><strong>Brackets:</strong> multiply every term inside: <code>3(x + 2) = 3x + 6</code>.</li>
+          <li><strong>Fractions:</strong> write answers as numbers or fractions like <code>-3/2</code> or <code>5/4</code>.</li>
+        </ul>
+        <h4>Keyboard Shortcuts</h4>
+        <ul>
+          <li><kbd>Ctrl</kbd> + <kbd>Enter</kbd> (or <kbd>Cmd</kbd> + <kbd>Enter</kbd>): check your notebook steps immediately.</li>
+          <li><kbd>Enter</kbd> in practice box: submits your answer for x.</li>
+          <li><kbd>Esc</kbd>: close this help dialog.</li>
+        </ul>
+        <button id="help-ok" class="primary" type="button" style="width:100%">Got it!</button>
+      </div>
     </div>
   </main>
 

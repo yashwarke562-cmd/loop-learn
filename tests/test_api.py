@@ -16,8 +16,12 @@ def test_health_and_security_headers(client):
     assert r.status_code == 200 and r.json()["gemini"] is False
     assert "default-src 'self'" in r.headers["content-security-policy"]
     assert r.headers["x-frame-options"] == "DENY" and r.headers["x-content-type-options"] == "nosniff"
+    assert "strict-transport-security" in r.headers
+    assert r.headers["x-permitted-cross-domain-policies"] == "none"
     assert client.get("/").status_code == 200
-    assert client.get("/static/app.js").status_code == 200
+    static_res = client.get("/static/app.js")
+    assert static_res.status_code == 200
+    assert "max-age=3600" in static_res.headers["cache-control"]
     assert client.get("/docs").status_code == 404 and client.get("/openapi.json").status_code == 404
 
 

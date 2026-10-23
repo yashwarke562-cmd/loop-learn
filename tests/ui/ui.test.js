@@ -61,6 +61,14 @@ const hidden = (w, id) => w.document.getElementById(id).hidden;
   ok(/Not quite/.test(txt(w, "pr-result")), "wrong answer feedback: " + txt(w, "pr-result"));
   ok(w.document.querySelectorAll("#skills li").length >= 1 && hidden(w, "sk-empty"), "skills bars rendered");
 
+  // modal & accessibility controls
+  click(w, "btn-help");
+  ok(!hidden(w, "help-modal"), "help dialog opens on clicking 'How it works'");
+  click(w, "help-close");
+  ok(hidden(w, "help-modal"), "help dialog closes on close button");
+  click(w, "toggle-paper");
+  ok(w.document.getElementById("steps").classList.contains("plain"), "paper toggle toggles plain paper class");
+
   // teacher flow
   w = await boot();
   val(w, "name", "ms_rao"); w.document.querySelector('input[value="teacher"]').checked = true; val(w, "pin", process.env.TEACHER_PIN || "2468");

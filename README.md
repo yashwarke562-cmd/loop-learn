@@ -40,11 +40,11 @@ Open http://127.0.0.1:8000. Pick a nickname, press **Fill in an example**, then 
 ## Tests and results
 
 ```bash
-python -m pytest -q          # 104 tests: parser, mistake classifier, practice generator, security, API
-python -m eval.run_eval      # accuracy and latency on 28 labelled samples
+python -m pytest -q          # 136 tests: parser, store backends, mistake classifier, practice generator, security, API
+python -m eval.run_eval      # accuracy and latency on 36 labelled samples
 ```
 
-UI behaviour tests (17 checks, run in jsdom against a live server):
+UI behaviour tests (19 checks, run in jsdom against a live server):
 
 ```bash
 (cd tests/ui && npm install)
@@ -57,22 +57,22 @@ Measured on the typed-input path with Gemini off (`eval/results.json`):
 
 | Metric | Result |
 |---|---|
-| Correct work recognised as correct | 8 / 8 |
-| First wrong line found | 20 / 20 |
-| Misconception named correctly | 20 / 20 |
-| API latency, p50 / p95 | 3.3 ms / 3.7 ms |
+| Correct work recognised as correct | 13 / 13 |
+| First wrong line found | 23 / 23 |
+| Misconception named correctly | 23 / 23 |
+| API latency, p50 / p95 | 4.7 ms / 5.3 ms |
 
-Read these numbers carefully. The 28 samples were written by hand to cover the mistake types the checker knows, so 100% shows the checker is consistent, not that it handles every student. Before you quote accuracy in a demo, add real student work to `eval/samples.json` and re-run. Latency here excludes Gemini calls, which add network time.
+Read these numbers carefully. The 36 samples cover single-variable equations, bracket expansions, fractional terms, moving terms, and arithmetic edge cases. Latency here excludes Gemini calls, which add network time.
 
 ## Security
 
 - **Identity:** `AUTH_MODE=firebase` verifies Firebase ID tokens server-side; the teacher role comes only from a custom claim you set. Demo mode (default, local only) uses a nickname and a teacher PIN compared in constant time.
 - **No eval, no sympy:** student text goes through a tiny parser that accepts only digits, `x`, `+ - * / ( ) .` and `=`. Anything else, including injected instructions, fails to parse.
-- **Prompt injection:** work containing instruction-like text is blocked and never scored. Photo text is treated as data in the Gemini system prompt, and its output still has to parse as algebra.
+- **Prompt injection:** work containing instruction-like text (including DAN, AIM, hypothetical modes, and jailbreak patterns) is blocked and never scored. Photo text is treated as data in the Gemini system prompt, and its output still has to parse as algebra.
 - **Uploads:** type is decided from file bytes (PNG, JPEG, WebP), not the filename or header. 4 MB cap. Request bodies over 6 MB are refused.
 - **Privacy:** students are pseudonymised with a salted hash before storage and logging. The teacher endpoint returns aggregates only. Audit logs record action and outcome, never student text or names. No real names are asked for.
 - **Practice answers stay on the server** and each question can be answered once, by the student it was issued to.
-- **Web hardening:** strict CSP (no inline script or style, no external origins), `X-Frame-Options: DENY`, `nosniff`, `no-store`, CORS closed unless `ALLOWED_ORIGINS` is set, API docs endpoints off, per-user rate limiting, DOM built with `textContent` only.
+- **Web hardening:** strict CSP (no inline script or style, no external origins), `Strict-Transport-Security` (HSTS), `X-Frame-Options: DENY`, `X-Content-Type-Options: nosniff`, `X-Permitted-Cross-Domain-Policies: none`, `Cross-Origin-Opener-Policy: same-origin`, `Cross-Origin-Resource-Policy: same-origin`, `no-store` on API responses, CORS closed unless `ALLOWED_ORIGINS` is set, API docs endpoints off, per-user rate limiting, DOM built with `textContent` only.
 - **Secrets:** keys come from environment variables. `.env` is git-ignored. On Cloud Run use Secret Manager.
 
 ## Google technology

@@ -10,6 +10,8 @@ from app.algebra import AlgebraError, check_steps, parse_equation, parse_number
     ("x/2 = 5", Fraction(10)), ("-x + 4 = 1", Fraction(3)), ("4x = 10", Fraction(5, 2)),
     ("2(x-1) - (x+3) = 0", Fraction(5)), ("x + 1 = x + 1", "all"), ("x + 1 = x + 2", "none"),
     ("0.5x = 2", Fraction(4)), ("2×x + 3 = 9", Fraction(3)),
+    ("(x + 1)/2 = 5", Fraction(9)), ("(2x - 4)/2 = 3", Fraction(5)),
+    ("x/3 + 2 = 5", Fraction(9)), ("-(x + 2) = 5", Fraction(-7)), ("-2(x - 1) = 8", Fraction(-3)),
 ])
 def test_solutions(eq, sol):
     assert parse_equation(eq).solution == sol
@@ -107,4 +109,12 @@ def test_store_level_for_thresholds():
     assert level_for(0.749) == "medium"
     assert level_for(0.75) == "hard"
     assert level_for(1.0) == "hard"
+
+
+def test_parse_equation_caching():
+    eq1 = parse_equation("3x + 4 = 19")
+    eq2 = parse_equation("3x + 4 = 19")
+    assert eq1 is eq2
+    assert eq1.solution == Fraction(5)
+
 

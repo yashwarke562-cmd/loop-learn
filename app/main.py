@@ -56,6 +56,9 @@ def create_app() -> FastAPI:
         response = await call_next(request)
         for k, v in SECURITY_HEADERS.items():
             response.headers.setdefault(k, v)
+        # Enable browser caching for static stylesheets and scripts while preserving no-store on APIs
+        if request.url.path.startswith("/static/"):
+            response.headers["Cache-Control"] = "public, max-age=3600"
         return response
 
     def audit(p: Principal, action: str, outcome: str, **extra) -> None:

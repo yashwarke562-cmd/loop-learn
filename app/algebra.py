@@ -160,6 +160,7 @@ class Equation:
         return self.a1 == 1 and self.b1 == 0 and self.a2 == 0
 
 
+@functools.lru_cache(maxsize=1024)
 def parse_equation(text: str, dist_bug: bool = False) -> Equation:
     if not isinstance(text, str) or len(text) > MAX_LEN:
         raise AlgebraError("too long")
@@ -174,6 +175,7 @@ def parse_equation(text: str, dist_bug: bool = False) -> Equation:
     return Equation(l[0], l[1], r[0], r[1])
 
 
+@functools.lru_cache(maxsize=512)
 def parse_number(text: str) -> Fraction:
     """Parse a student's final answer such as 'x = 4', '4', '-3/2' or '2.5'."""
     if not isinstance(text, str) or len(text) > 30:
