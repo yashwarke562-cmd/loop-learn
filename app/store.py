@@ -4,24 +4,26 @@ from __future__ import annotations
 import threading
 import time
 from collections import Counter, OrderedDict, defaultdict, deque
+from typing import Any, Optional
 
 MAX_PENDING = 20
 MAX_EVENTS = 5000
 
 
 def level_for(score: float) -> str:
+    """Map mastery score [0.0, 1.0] to practice difficulty tier."""
     return "easy" if score < 0.4 else "medium" if score < 0.75 else "hard"
 
 
 class Store:
     def __init__(self) -> None:
         self.lock = threading.Lock()
-        self.mastery: dict[str, dict[str, dict]] = defaultdict(dict)
-        self.pending: dict[str, OrderedDict] = defaultdict(OrderedDict)
-        self.events: deque = deque(maxlen=MAX_EVENTS)
+        self.mastery: dict[str, dict[str, dict[str, Any]]] = defaultdict(dict)
+        self.pending: dict[str, OrderedDict[str, dict[str, str]]] = defaultdict(OrderedDict)
+        self.events: deque[dict[str, Any]] = deque(maxlen=MAX_EVENTS)
 
     # mastery -----------------------------------------------------------------
-    def update_mastery(self, uid: str, skill: str, correct: bool) -> dict:
+    def update_mastery(self, uid: str, skill: str, correct: bool) -> dict[str, Any]:
         with self.lock:
             m = self.mastery[uid].setdefault(skill, {"score": 0.3, "attempts": 0, "correct": 0})
             m["score"] = round(0.7 * m["score"] + 0.3 * (1.0 if correct else 0.0), 3)
@@ -29,7 +31,7 @@ class Store:
             m["correct"] += int(correct)
             return dict(m)
 
-    def get_mastery(self, uid: str) -> dict:
+    def get_mastery(self, uid: str) -> dict[str, dict[str, Any]]:
         with self.lock:
             return {k: dict(v) for k, v in self.mastery[uid].items()}
 
@@ -45,19 +47,19 @@ class Store:
             while len(q) > MAX_PENDING:
                 q.popitem(last=False)
 
-    def pop_question(self, uid: str, qid: str):
+    def pop_question(self, uid: str, qid: str) -> Optional[dict[str, str]]:
         with self.lock:
             return self.pending[uid].pop(qid, None)
 
     # anonymised events for the teacher dashboard ---------------------------------
-    def add_event(self, uid: str, kind: str, skill: str, misconception: str | None, needs_teacher: bool) -> None:
+    def add_event(self, uid: str, kind: str, skill: str, misconception: Optional[str], needs_teacher: bool) -> None:
         with self.lock:
             self.events.append({
                 "t": time.time(), "uid": uid, "kind": kind, "skill": skill,
                 "misconception": misconception, "needs_teacher": needs_teacher,
             })
 
-    def class_summary(self) -> dict:
+    def class_summary(self) -> dict[str, Any]:
         with self.lock:
             events = list(self.events)
             students = set(self.mastery) | {e["uid"] for e in events}
@@ -65,12 +67,22 @@ class Store:
             for skills in self.mastery.values():
                 for skill, m in skills.items():
                     per_skill[skill].append(m["score"])
-        diag = [e for e in events if e["kind"] == "diagnosis"]
-        mis = Counter(e["misconception"] for e in diag if e["misconception"])
+
+        checks = 0
+        needs_teacher = 0
+        mis: Counter[str] = Counter()
+        for e in events:
+            if e["kind"] == "diagnosis":
+                checks += 1
+                if e["needs_teacher"]:
+                    needs_teacher += 1
+                if e["misconception"]:
+                    mis[e["misconception"]] += 1
+
         return {
             "students": len(students),
-            "checks": len(diag),
-            "needs_teacher": sum(1 for e in diag if e["needs_teacher"]),
+            "checks": checks,
+            "needs_teacher": needs_teacher,
             "misconceptions": mis.most_common(),
-            "skills": {k: round(sum(v) / len(v), 2) for k, v in per_skill.items()},
+            "skills": {k: round(sum(v) / len(v), 2) for k, v in per_skill.items() if v},
         }

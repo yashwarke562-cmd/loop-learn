@@ -1,7 +1,9 @@
 .venv
+.uv_cache
 .git
 __pycache__
 tests
 eval
 .env
 node_modules
+*.log

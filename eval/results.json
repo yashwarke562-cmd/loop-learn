@@ -1,12 +1,12 @@
 {
-  "samples": 28,
-  "correct_work_recognised": "8/8",
-  "first_error_step_exact": "20/20",
-  "misconception_exact": "20/20",
+  "samples": 30,
+  "correct_work_recognised": "9/9",
+  "first_error_step_exact": "21/21",
+  "misconception_exact": "21/21",
   "latency_ms": {
-    "p50": 5.0,
+    "p50": 5.1,
     "p95": 5.5,
-    "max": 29.0
+    "max": 47.4
   },
   "misses": []
 }

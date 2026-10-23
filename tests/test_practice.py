@@ -23,4 +23,7 @@ def test_verifier_rejects_wrong_answer():
     assert verify("2x + 3 = 11", Fraction(4))
     assert not verify("2x + 3 = 11", Fraction(5))
     assert not verify("x + 1 = x + 2", Fraction(1))
+    assert not verify("x + 1 = x + 1", Fraction(1))
     assert not verify("not an equation", Fraction(1))
+    assert not verify("", Fraction(0))
+

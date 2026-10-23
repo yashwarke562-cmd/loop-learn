@@ -9,10 +9,11 @@ from collections import defaultdict, deque
 from typing import Optional
 
 _INJECTION = re.compile(
-    r"(ignore|disregard|forget|override)\W+(all\W+|any\W+|the\W+|your\W+|previous\W+|prior\W+|above\W+)*"
-    r"(instructions?|prompts?|rules?)"
-    r"|system\s*prompt|you\s+are\s+now|act\s+as\b|reveal\s+(your|the)\s+(prompt|instructions|key)"
-    r"|developer\s+mode|jailbreak|api[_\s-]?key",
+    r"(?:ignore|disregard|forget|override|bypass)\W+(?:all\W+|any\W+|the\W+|your\W+|previous\W+|prior\W+|above\W+)*"
+    r"(?:instructions?|prompts?|rules?)"
+    r"|system\s*prompt|you\s+are\s+now|act\s+as\b|reveal\s+(?:your|the)\s+(?:prompt|instructions|key)"
+    r"|developer\s+mode|jailbreak|api[_\s-]?key|prompt\s*injection"
+    r"|(?:dan|chatgpt|claude|gemini)\s*mode",
     re.IGNORECASE,
 )
 
@@ -39,14 +40,22 @@ def sniff_image(data: bytes) -> Optional[str]:
 class RateLimiter:
     """Sliding-window limiter, in memory. Use Cloud Armor or Redis if you run many instances."""
 
-    def __init__(self, limit: int, window: float = 60.0) -> None:
-        self.limit, self.window = limit, window
-        self.hits: dict[str, deque] = defaultdict(deque)
+    def __init__(self, limit: int, window: float = 60.0, max_keys: int = 10_000) -> None:
+        self.limit = limit
+        self.window = window
+        self.max_keys = max_keys
+        self.hits: dict[str, deque[float]] = defaultdict(deque)
         self.lock = threading.Lock()
 
     def allow(self, key: str) -> bool:
         now = time.monotonic()
         with self.lock:
+            # Prevent unbounded growth by pruning expired keys when table reaches capacity
+            if len(self.hits) >= self.max_keys:
+                stale = [k for k, q in list(self.hits.items()) if not q or now - q[-1] > self.window]
+                for k in stale:
+                    del self.hits[k]
+
             q = self.hits[key]
             while q and now - q[0] > self.window:
                 q.popleft()
@@ -54,6 +63,10 @@ class RateLimiter:
                 return False
             q.append(now)
             return True
+
+    def clear(self) -> None:
+        with self.lock:
+            self.hits.clear()
 
 
 SECURITY_HEADERS = {

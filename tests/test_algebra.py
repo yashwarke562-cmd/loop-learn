@@ -75,3 +75,36 @@ def test_unreadable_step_reports_which():
 def test_unclear_error_has_low_confidence():
     r = check_steps("2x + 3 = 11", ["7x = 100"])
     assert r["misconception"]["id"] == "unclear_error" and r["confidence"] < 0.6
+
+
+def test_fmt_fraction_representations():
+    from app.algebra import fmt_fraction
+    assert fmt_fraction(Fraction(5, 1)) == "5"
+    assert fmt_fraction(Fraction(-4, 1)) == "-4"
+    assert fmt_fraction(Fraction(3, 7)) == "3/7"
+    assert fmt_fraction(Fraction(-2, 3)) == "-2/3"
+
+
+def test_sign_error_both_detected():
+    # 2x + 3 = x + 9 -> moving x to left and 3 to right without flipping either: 2x + x = 9 + 3 (3x = 12 -> x=4)
+    r = check_steps("2x + 3 = x + 9", ["2x + x = 9 + 3", "3x = 12"])
+    assert r["status"] == "ok" and not r["is_correct"]
+    assert r["misconception"]["id"] == "sign_error_both"
+    assert r["first_error_step"] == 1
+
+
+def test_parse_number_negative_and_decimal():
+    assert parse_number("x = -5") == Fraction(-5)
+    assert parse_number("-3/4") == Fraction(-3, 4)
+    assert parse_number("x = -2.5") == Fraction(-5, 2)
+
+
+def test_store_level_for_thresholds():
+    from app.store import level_for
+    assert level_for(0.0) == "easy"
+    assert level_for(0.39) == "easy"
+    assert level_for(0.4) == "medium"
+    assert level_for(0.749) == "medium"
+    assert level_for(0.75) == "hard"
+    assert level_for(1.0) == "hard"
+

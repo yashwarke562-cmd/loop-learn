@@ -8,13 +8,13 @@ from __future__ import annotations
 import re
 from dataclasses import dataclass
 from fractions import Fraction
-from typing import Optional, Union
+from typing import Literal, Optional, Union
 
 MAX_LEN = 80
 _ALLOWED = re.compile(r"^[0-9x+\-*/().=]+$")
 _NUM = re.compile(r"\d+(?:\.\d+)?")
 
-Solution = Union[Fraction, str]  # Fraction, "all" (identity) or "none" (contradiction)
+Solution = Union[Fraction, Literal["all", "none"]]  # Fraction, "all" (identity) or "none" (contradiction)
 
 
 class AlgebraError(ValueError):
@@ -28,8 +28,9 @@ def _normalize(text: str) -> str:
     return re.sub(r"\s+", "", s)
 
 
-def _tokenize(s: str) -> list:
-    tokens, i = [], 0
+def _tokenize(s: str) -> list[Union[Fraction, str]]:
+    tokens: list[Union[Fraction, str]] = []
+    i = 0
     while i < len(s):
         m = _NUM.match(s, i)
         if m:
@@ -44,12 +45,14 @@ def _tokenize(s: str) -> list:
 
 
 # A linear expression is a tuple (a, b, is_group) meaning a*x + b.
-Lin = tuple
+Lin = tuple[Fraction, Fraction, bool]
 
 
 class _Parser:
-    def __init__(self, tokens: list, dist_bug: bool = False) -> None:
-        self.t, self.i, self.bug = tokens, 0, dist_bug
+    def __init__(self, tokens: list[Union[Fraction, str]], dist_bug: bool = False) -> None:
+        self.t = tokens
+        self.i = 0
+        self.bug = dist_bug
 
     def peek(self):
         return self.t[self.i] if self.i < len(self.t) else None
@@ -238,19 +241,19 @@ MISCONCEPTIONS = {
 def _hypothesis_solutions(prev: Equation, prev_text: str) -> list[tuple[str, Optional[Fraction]]]:
     """What solution would each known mistake produce if applied to the previous line?"""
     a1, b1, a2, b2 = prev.a1, prev.b1, prev.a2, prev.b2
-    A0, B0 = prev.A, prev.B
+    a0, b0 = prev.A, prev.B
 
-    def solve(A: Fraction, B: Fraction) -> Optional[Fraction]:
-        return B / A if A != 0 else None
+    def solve(a: Fraction, b: Fraction) -> Optional[Fraction]:
+        return b / a if a != 0 else None
 
     hyps: list[tuple[str, Optional[Fraction]]] = [
         ("sign_error_constant", solve(a1 - a2, b2 + b1)),
         ("sign_error_variable", solve(a1 + a2, b2 - b1)),
         ("sign_error_both", solve(a1 + a2, b2 + b1)),
     ]
-    if A0 not in (0, 1):
-        hyps.append(("division_skipped", B0))
-        hyps.append(("division_flipped", A0 / B0 if B0 != 0 else None))
+    if a0 not in (0, 1):
+        hyps.append(("division_skipped", b0))
+        hyps.append(("division_flipped", a0 / b0 if b0 != 0 else None))
     if "(" in prev_text:
         try:
             sol = parse_equation(prev_text, dist_bug=True).solution

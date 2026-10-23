@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 import logging
-from typing import Optional
+from typing import Any, Optional
 
 from ..algebra import check_steps
 from ..security import looks_like_injection
@@ -27,7 +27,7 @@ def _template_message(res: dict) -> str:
     return f"Line {res['first_error_step']} is where it went off track. {res['misconception']['tip']}"
 
 
-def diagnose(question: str, steps_text: str, image: Optional[tuple[bytes, str]], llm) -> dict:
+def diagnose(question: str, steps_text: str, image: Optional[tuple[bytes, str]], llm: Optional[Any] = None) -> dict:
     """Return a diagnosis dict. `image` is (bytes, mime) already validated by the caller."""
     source = "checker"
     if image is not None:
@@ -54,8 +54,9 @@ def diagnose(question: str, steps_text: str, image: Optional[tuple[bytes, str]],
     res["injection_suspected"] = injection
     res["transcription"] = lines
     res["source"] = source
-    if injection and res["status"] != "ok":
+    if injection:
         res["status"] = "blocked"
+        res["is_correct"] = False
     res["needs_teacher"] = res["status"] == "ok" and res["confidence"] < 0.6
 
     message = _template_message(res)
