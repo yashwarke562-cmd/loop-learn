@@ -46,7 +46,13 @@
     <div id="student" hidden>
       <div class="split">
         <section class="card notebook" aria-labelledby="nb-h">
-          <h2 id="nb-h">Your notebook</h2>
+          <div class="row between">
+            <h2 id="nb-h">Your notebook</h2>
+            <div class="row controls-row">
+              <button id="toggle-paper" class="link small" type="button" aria-pressed="false" aria-label="Toggle lined paper styling">Plain paper</button>
+              <button id="toggle-sound" class="link small" type="button" aria-pressed="true" aria-label="Toggle accessibility sound feedback">Sound: On</button>
+            </div>
+          </div>
           <label for="question">The equation you were given</label>
           <input id="question" class="eq" maxlength="80" placeholder="2x + 3 = 11" autocomplete="off" aria-describedby="q-hint">
           <p id="q-hint" class="hint sr-only">Type a linear equation using digits, x, and standard operators.</p>

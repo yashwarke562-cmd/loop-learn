@@ -15,9 +15,26 @@ jobs:
         with:
           python-version: "3.12"
           cache: "pip"
-      - name: Install dependencies
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: Install Python dependencies
         run: pip install -r requirements-dev.txt
-      - name: Run test suite
+      - name: Run Python test suite
         run: python -m pytest -q
       - name: Run evaluation benchmarks
         run: python -m eval.run_eval
+      - name: Install UI test dependencies
+        run: |
+          cd tests/ui
+          npm install
+      - name: Run end-to-end UI tests
+        run: |
+          TEACHER_PIN=1234 python -m uvicorn app.main:app --port 8765 &
+          sleep 3
+          TEACHER_PIN=1234 node tests/ui/ui.test.js
+      - name: Security vulnerability audit
+        run: |
+          pip install pip-audit
+          pip-audit --desc || true

@@ -5,6 +5,7 @@ Anything else (including prompt-injection text) fails to parse and is treated as
 """
 from __future__ import annotations
 
+import functools
 import re
 from dataclasses import dataclass
 from fractions import Fraction
@@ -238,6 +239,15 @@ MISCONCEPTIONS = {
 }
 
 
+@functools.lru_cache(maxsize=256)
+def _cached_distribution_bug_sol(text: str) -> Optional[Fraction]:
+    try:
+        sol = parse_equation(text, dist_bug=True).solution
+        return sol if isinstance(sol, Fraction) else None
+    except AlgebraError:
+        return None
+
+
 def _hypothesis_solutions(prev: Equation, prev_text: str) -> list[tuple[str, Optional[Fraction]]]:
     """What solution would each known mistake produce if applied to the previous line?"""
     a1, b1, a2, b2 = prev.a1, prev.b1, prev.a2, prev.b2
@@ -255,11 +265,7 @@ def _hypothesis_solutions(prev: Equation, prev_text: str) -> list[tuple[str, Opt
         hyps.append(("division_skipped", b0))
         hyps.append(("division_flipped", a0 / b0 if b0 != 0 else None))
     if "(" in prev_text:
-        try:
-            sol = parse_equation(prev_text, dist_bug=True).solution
-            hyps.append(("distribution_error", sol if isinstance(sol, Fraction) else None))
-        except AlgebraError:
-            pass
+        hyps.append(("distribution_error", _cached_distribution_bug_sol(prev_text)))
     return hyps
 
 

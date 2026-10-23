@@ -19,6 +19,57 @@
     return data;
   }
 
+  // ---- Accessibility & Audio Feedback ------------------------------------------------
+  let soundEnabled = true;
+  let audioCtx = null;
+  function playTone(type) {
+    if (!soundEnabled) return;
+    try {
+      if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      if (audioCtx.state === "suspended") audioCtx.resume();
+      const now = audioCtx.currentTime;
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      if (type === "success") {
+        osc.type = "sine";
+        osc.frequency.setValueAtTime(523.25, now);
+        osc.frequency.setValueAtTime(659.25, now + 0.1);
+        gain.gain.setValueAtTime(0.08, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.3);
+        osc.start(now);
+        osc.stop(now + 0.3);
+      } else if (type === "attention") {
+        osc.type = "triangle";
+        osc.frequency.setValueAtTime(349.23, now);
+        gain.gain.setValueAtTime(0.06, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.25);
+        osc.start(now);
+        osc.stop(now + 0.25);
+      }
+    } catch (_) {}
+  }
+
+  const paperBtn = $("toggle-paper");
+  if (paperBtn) {
+    paperBtn.addEventListener("click", () => {
+      const steps = $("steps");
+      const isPlain = steps.classList.toggle("plain");
+      paperBtn.setAttribute("aria-pressed", String(isPlain));
+      paperBtn.textContent = isPlain ? "Lined paper" : "Plain paper";
+    });
+  }
+
+  const soundBtn = $("toggle-sound");
+  if (soundBtn) {
+    soundBtn.addEventListener("click", () => {
+      soundEnabled = !soundEnabled;
+      soundBtn.setAttribute("aria-pressed", String(soundEnabled));
+      soundBtn.textContent = soundEnabled ? "Sound: On" : "Sound: Muted";
+    });
+  }
+
   // Single health check call on load to populate skills and check vision
   fetch("/api/health")
     .then((r) => r.json())
@@ -135,12 +186,15 @@
       if (res.status === "ok" && res.is_correct) {
         v.className = "verdict good";
         text(v, res.complete ? "All correct." : "Correct so far.");
+        playTone("success");
       } else if (res.status === "ok") {
         v.className = "verdict bad";
         text(v, `Line ${res.first_error_step}: ${res.misconception.title}`);
+        playTone("attention");
       } else {
         v.className = "verdict bad";
         text(v, "I could not check that.");
+        playTone("attention");
       }
       text($("message"), res.message || "");
       const meta = [];
@@ -196,6 +250,11 @@
       });
       state.qid = null;
       show($("pr-check"), false);
+      if (r.correct) {
+        playTone("success");
+      } else {
+        playTone("attention");
+      }
       text($("pr-result"), r.correct ? "Right! The next one will adapt to you." : `Not quite. The answer was x = ${r.answer}.`);
       text($("pr-next"), "Next question");
       loadSkills();

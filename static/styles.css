@@ -50,6 +50,9 @@ button { font: inherit; cursor: pointer; }
 .secondary { background: #fff; color: var(--ink); }
 .primary:disabled { opacity: 0.6; cursor: progress; }
 .link { background: none; border: 0; padding: 0; color: #1f4fbf; text-decoration: underline; }
+.link.small { font-size: 0.85rem; font-weight: 500; }
+.controls-row { margin-top: 0; gap: 8px 12px; }
+textarea.ruled.plain { background-image: none !important; padding-left: 12px !important; }
 .row { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; margin-top: 12px; }
 .row.between { justify-content: space-between; margin-top: 0; }
 .row .primary { margin-top: 0; }
