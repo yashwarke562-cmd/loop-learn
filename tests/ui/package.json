@@ -1,0 +1,6 @@
+{
+  "name": "learnloop-ui-test",
+  "private": true,
+  "scripts": { "test": "node ui.test.js" },
+  "devDependencies": { "jsdom": "^30.1.3" }
+}

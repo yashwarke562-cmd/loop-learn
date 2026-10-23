@@ -1,0 +1,18 @@
+// For when you swap app/store.py for Firestore. The shipped in-memory store does not use these rules.
+// Students read and write only their own document; nobody reads another student's data from the client.
+// Teacher dashboards should read server-made aggregates, never raw student documents.
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /students/{uid}/{document=**} {
+      allow read, write: if request.auth != null && request.auth.uid == uid;
+    }
+    match /aggregates/{doc} {
+      allow read: if request.auth != null && request.auth.token.role == 'teacher';
+      allow write: if false;
+    }
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

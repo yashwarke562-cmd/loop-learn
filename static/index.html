@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>LearnLoop: find out why the answer went wrong</title>
+  <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+  <header class="top">
+    <h1 class="mark">LearnLoop</h1>
+    <p class="tag">Class 8 algebra tutor that finds the step where it went wrong.</p>
+    <div id="session" class="session" hidden>
+      <span id="whoami"></span>
+      <button id="signout" class="link" type="button">Switch user</button>
+    </div>
+  </header>
+
+  <main>
+    <section id="signin" class="card signin">
+      <h2>Who is working today?</h2>
+      <form id="signin-form" autocomplete="off">
+        <label for="name">Your name or nickname</label>
+        <input id="name" maxlength="32" pattern="[A-Za-z0-9_\-]{1,32}" required placeholder="maya_8b">
+        <p class="hint">Letters, numbers, - and _ only. We never store your real name.</p>
+        <fieldset>
+          <legend>I am a</legend>
+          <label class="choice"><input type="radio" name="role" value="student" checked> Student</label>
+          <label class="choice"><input type="radio" name="role" value="teacher"> Teacher</label>
+        </fieldset>
+        <div id="pin-row" hidden>
+          <label for="pin">Teacher PIN</label>
+          <input id="pin" type="password" inputmode="numeric" maxlength="32" autocomplete="off">
+          <p class="hint">Printed in the server log when the app starts, or set with TEACHER_PIN.</p>
+        </div>
+        <button class="primary" type="submit">Start</button>
+        <p id="signin-error" class="error" role="alert"></p>
+      </form>
+    </section>
+
+    <div id="student" hidden>
+      <div class="split">
+        <section class="card notebook" aria-labelledby="nb-h">
+          <h2 id="nb-h">Your notebook</h2>
+          <label for="question">The equation you were given</label>
+          <input id="question" class="eq" maxlength="80" placeholder="2x + 3 = 11" autocomplete="off">
+          <label for="steps">Your working, one line per step</label>
+          <textarea id="steps" class="eq ruled" rows="6" maxlength="1200" spellcheck="false"
+                    placeholder="2x = 11 - 3&#10;x = 4"></textarea>
+          <div class="row">
+            <label class="file">
+              <input id="photo" type="file" accept="image/png,image/jpeg,image/webp">
+              <span id="photo-label">Use a photo of your work instead</span>
+            </label>
+            <button id="example" class="link" type="button">Fill in an example</button>
+          </div>
+          <p id="photo-hint" class="hint" hidden>Photo reading is off because Gemini is not configured. Typing works.</p>
+          <button id="check" class="primary" type="button">Check my work</button>
+          <p id="diag-error" class="error" role="alert"></p>
+        </section>
+
+        <section class="card pen" aria-labelledby="pen-h" aria-live="polite">
+          <h2 id="pen-h">Red pen</h2>
+          <p id="pen-empty" class="empty">Write your steps on the left and press Check my work. The first line that goes wrong gets circled.</p>
+          <div id="pen-result" hidden>
+            <ol id="review" class="review"></ol>
+            <p id="verdict" class="verdict"></p>
+            <p id="message" class="message"></p>
+            <p id="meta" class="hint"></p>
+          </div>
+        </section>
+      </div>
+
+      <div class="split">
+        <section class="card" aria-labelledby="pr-h">
+          <h2 id="pr-h">Practice that fits you</h2>
+          <p id="pr-empty" class="empty">Questions are chosen from your weakest skill and get harder as you improve.</p>
+          <div id="pr-box" hidden>
+            <p id="pr-meta" class="hint"></p>
+            <p id="pr-q" class="eq big"></p>
+            <label for="pr-a">Your answer for x</label>
+            <input id="pr-a" class="eq" maxlength="30" autocomplete="off" placeholder="4 or -3/2">
+          </div>
+          <div class="row">
+            <button id="pr-check" class="primary" type="button" hidden>Check answer</button>
+            <button id="pr-next" class="secondary" type="button">Give me a question</button>
+          </div>
+          <p id="pr-result" class="message" role="status"></p>
+          <p id="pr-error" class="error" role="alert"></p>
+        </section>
+
+        <section class="card" aria-labelledby="sk-h">
+          <h2 id="sk-h">Your skills</h2>
+          <ul id="skills" class="bars"></ul>
+          <p id="sk-empty" class="empty">Nothing yet. Check some work or answer a practice question.</p>
+        </section>
+      </div>
+    </div>
+
+    <div id="teacher" hidden>
+      <section class="card" aria-labelledby="t-h">
+        <div class="row between">
+          <h2 id="t-h">Class overview</h2>
+          <button id="t-refresh" class="secondary" type="button">Refresh</button>
+        </div>
+        <p class="hint">Aggregated only. Individual students are never shown here.</p>
+        <dl class="stats">
+          <div><dt>Students</dt><dd id="t-students">0</dd></div>
+          <div><dt>Work checked</dt><dd id="t-checks">0</dd></div>
+          <div><dt>Need your eyes</dt><dd id="t-flag">0</dd></div>
+        </dl>
+        <p id="t-error" class="error" role="alert"></p>
+      </section>
+      <div class="split">
+        <section class="card" aria-labelledby="tm-h">
+          <h2 id="tm-h">Most common mistakes</h2>
+          <ul id="t-mis" class="bars"></ul>
+          <p id="t-mis-empty" class="empty">No mistakes recorded yet.</p>
+        </section>
+        <section class="card" aria-labelledby="ts-h">
+          <h2 id="ts-h">Average skill level</h2>
+          <ul id="t-skills" class="bars"></ul>
+          <p id="t-skills-empty" class="empty">No practice recorded yet.</p>
+        </section>
+      </div>
+      <section class="card" aria-labelledby="tl-h">
+        <h2 id="tl-h">Suggested mini-lesson</h2>
+        <p id="t-lesson" class="message">Once students submit work, a suggestion shows up here.</p>
+      </section>
+    </div>
+  </main>
+  <script src="/static/app.js"></script>
+</body>
+</html>
